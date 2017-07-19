@@ -1,0 +1,43 @@
+---
+- name: Configure Ansible
+  hosts: localhost
+  tasks:
+  - block:
+    - name: Add jenkins slaves
+      add_host:
+        name: "192.168.119.{{ item|int + 9 }}.nip.io"
+        groups:
+          - jenkins_slaves
+        ansible_become: true
+        ansible_ssh_user: vagrant
+        ansible_ssh_private_key_file: /vagrant/.vagrant/machines/jenkins_slave{{ item|int - 1 }}/libvirt/private_key
+      with_sequence: count={{ jenkins_slaves|int }}
+
+    - name: Add jenkins master
+      add_host:
+        name: "192.168.119.2.nip.io" 
+        groups:
+          - jenkins_master
+        ansible_connection: local
+
+    - name: Create ssh dir
+      file:
+        path: /root/.ssh
+        state: directory
+        mode: 0700
+
+    - name: Disable strict host checking
+      copy:
+        content: |
+                 Host 192.168.119.*
+                   StrictHostKeyChecking no
+        dest: /root/.ssh/config
+        mode: 0600
+    when: vagrant is defined
+
+- name: Install Jenkins
+  hosts:
+  - jenkins_master
+  - jenkins_slaves
+  roles:
+  - asb-ci

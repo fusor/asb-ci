@@ -1,0 +1,64 @@
+---
+- block:
+  - name: Install master packages
+    yum:
+      name: "{{ item }}"
+      state: latest
+    with_items:
+    - jenkins
+    - nginx
+    - libsemanage-python
+    - py-bcrypt
+
+  - name: Configure nginx
+    copy:
+      src: "{{ role_path }}/files/etc/nginx/nginx.conf"
+      dest: /etc/nginx/nginx.conf
+
+  - name: Configure jenkins
+    copy:
+      src: "{{ role_path }}/files/var/lib/jenkins/config.xml"
+      dest: /var/lib/jenkins/config.xml
+      owner: jenkins
+      group: jenkins
+
+  - name: Generate jenkins admin users password hash
+    shell: python -c 'import bcrypt; print(bcrypt.hashpw("{{ jenkins_admin_passwd }}", bcrypt.gensalt(log_rounds=10)))' 
+    register: jenkins_admin_passwd_hash
+
+  - name: Create users directory
+    file:
+      path: /var/lib/jenkins/users/admin
+      mode: 0755
+      state: directory
+      owner: jenkins
+      group: jenkins
+
+  - name: Configure jenkins admin user
+    template:
+      src: "{{ role_path }}/templates/var/lib/jenkins/users/admin/config.xml.j2"
+      dest: /var/lib/jenkins/users/admin/config.xml
+      owner: jenkins
+      group: jenkins
+
+  - name: Start master services
+    systemd:
+      name: "{{ item }}"
+      enabled: yes
+      state: started
+    with_items:
+    - jenkins
+    - nginx
+
+  - name: Open http firewall access
+    firewalld:
+      service: http
+      permanent: true
+      state: enabled
+
+  - name: Allow nginx to network connect
+    seboolean:
+      name: httpd_can_network_connect
+      state: yes
+      persistent: yes
+  when: inventory_hostname in groups['jenkins_master']

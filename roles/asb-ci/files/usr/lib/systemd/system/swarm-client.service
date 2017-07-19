@@ -1,0 +1,10 @@
+[Unit]
+Description=Swarm Client
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/java -jar /opt/swarm-client.jar
+
+[Install]
+WantedBy=multi-user.target
