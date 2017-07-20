@@ -22,8 +22,13 @@
       owner: jenkins
       group: jenkins
 
+  - name: Set jenkins options
+    copy:
+      src: "{{ role_path }}/files/etc/sysconfig/jenkins"
+      dest: /etc/sysconfig/jenkins
+
   - name: Generate jenkins admin users password hash
-    shell: python -c 'import bcrypt; print(bcrypt.hashpw("{{ jenkins_admin_passwd }}", bcrypt.gensalt(log_rounds=10)))' 
+    shell: python -c 'import bcrypt; print(bcrypt.hashpw("{{ jenkins_admin_passwd }}", bcrypt.gensalt(log_rounds=10)))'
     register: jenkins_admin_passwd_hash
 
   - name: Create users directory
@@ -52,13 +57,73 @@
 
   - name: Open http firewall access
     firewalld:
-      service: http
+      port: "{{ item }}"
       permanent: true
       state: enabled
+    with_items:
+    - 80/tcp
+    - 59730/tcp
+
+  - name: Reload firewalld
+    systemd:
+      name: firewalld
+      state: reloaded
 
   - name: Allow nginx to network connect
     seboolean:
       name: httpd_can_network_connect
       state: yes
       persistent: yes
+
+  - name: Get jenkins client
+    get_url:
+      url: "http://localhost/jnlpJars/jenkins-cli.jar"
+      dest: /root/jenkins-cli.jar
+      mode: 0644
+
+  - name: Install plugins
+    shell: java -jar /root/jenkins-cli.jar -s http://127.0.0.1:8080/ install-plugin {{ item }} --username admin --password {{ jenkins_admin_passwd }}
+    with_items:
+    - ant
+    - build-timeout
+    - email-ext
+    - github-branch-source
+    - gradle
+    - ssh-slaves
+    - subversion
+    - timestamper
+    - workflow-aggregator
+    - ws-cleanup
+
+  - name: Restart Jenkins
+    systemd:
+      name: jenkins
+      state: reloaded
+
+  - name: Obtain crumb
+    uri:
+      url: 'http://localhost/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'
+      user: admin
+      password: "{{ jenkins_admin_passwd }}"
+      force_basic_auth: yes
+      return_content: yes
+    register: crumb
+
+  - block:
+    - name: Create Credentials
+      uri:
+        url: 'http://localhost/credentials/store/system/domain/_/createCredentials'
+        method: POST
+        user: admin
+        password: "{{ jenkins_admin_passwd }}"
+        body: json={{ lookup('template', 'vagrant-credential.j2')|to_nice_json}}
+        force_basic_auth: yes
+        headers:
+          Jenkins-Crumb: "{{ crumb.content | regex_replace('Jenkins-Crumb:') }}"
+        status_code: 302
+      with_sequence: count={{ jenkins_slaves|int }}
+
+#    - name: Create nodes
+
+    when: vagrant is defined
   when: inventory_hostname in groups['jenkins_master']

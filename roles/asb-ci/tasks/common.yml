@@ -27,24 +27,3 @@
       name: firewalld
       enabled: yes
       state: started
-
-  - name: Get swarm client
-    get_url:
-      url: "https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/3.4/swarm-client-3.4.jar"
-      dest: /opt/swarm-client.jar
-      mode: 0755
-
-  - name: Create swarm client service file
-    copy:
-      src: "{{ role_path }}/files/usr/lib/systemd/system/swarm-client.service"
-      dest: /usr/lib/systemd/system/swarm-client.service
-
-  - name: Start services 
-    systemd:
-      name: "{{ item }}"
-      enabled: yes
-      state: started
-      daemon_reload: yes
-    with_items:
-    - firewalld
-    - swarm-client

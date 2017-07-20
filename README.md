@@ -1,10 +1,10 @@
 ASB-CI
 ======
-Set up an Ansible Service Broker CI Environment
+Set up an Ansible Service Broker CI Environment. This will either set up a single host or a master with as many additional slaves as you specify.
 
 Vagrant
 -------
-Run `vagrant up`
+Run `vagrant up` to get one host or `SLAVES=3 vagrant up` to get a master and three slaves.
 
 Baremetal
 ---------
