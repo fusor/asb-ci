@@ -11,7 +11,8 @@ Baremetal
 1. Set up your hosts with CentOS 7
 2. Install Ansible wherever you want to run it
 3. Configure /etc/ansible/hosts with two groups named jenkins_master and jenkins_slaves. You should have 1 master and 0 or more slaves.
-4. run `ansible-playbook asb-ci.yml`
+4. Ensure ansible is able to ssh to your master and each of your hosts.
+5. run `ansible-playbook asb-ci.yml`
 
 Ansible Extra Vars
 -------------------
