@@ -1,2 +1,5 @@
 ---
 jenkins_admin_passwd: changeme
+slave_executors: 2
+slave_ssh_username: root
+slave_ssh_private_key_file: /root/.ssh/id_rsa

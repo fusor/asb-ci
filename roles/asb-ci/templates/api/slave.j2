@@ -1,0 +1,32 @@
+{
+  'name': '{{ item }}',
+  'nodeDescription': '{{ item }}',
+  'numExecutors': '2',
+  'remoteFS': '/home/vagrant',
+  'labelString': '',
+  'mode': 'NORMAL',
+  '': ['hudson.plugins.sshslaves.SSHLauncher', 'hudson.slaves.RetentionStrategy$Always'],
+  'launcher': {
+    'stapler-class': 'hudson.plugins.sshslaves.SSHLauncher',
+    '$class': 'hudson.plugins.sshslaves.SSHLauncher',
+    'host': '{{ item }}',
+{% if vagrant is defined %}
+    'credentialsId': '{{ item }}',
+{% else %}
+    'credentialsId': 'slave-ssh',
+{% endif %}
+    'port': '22',
+    'javaPath': '',
+    'jvmOptions': '',
+    'prefixStartSlaveCmd': '',
+    'suffixStartSlaveCmd': '',
+    'launchTimeoutSeconds': '',
+    'maxNumRetries': '',
+    'retryWaitTime': ''
+  },
+  'nodeProperties': {
+    'stapler-class-bag': 'true'
+  },
+  'type': 'hudson.slaves.DumbSlave',
+  'crumb': '{{ crumb.content }}'
+}

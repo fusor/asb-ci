@@ -109,21 +109,43 @@
       return_content: yes
     register: crumb
 
-  - block:
-    - name: Create Credentials
-      uri:
-        url: 'http://localhost/credentials/store/system/domain/_/createCredentials'
-        method: POST
-        user: admin
-        password: "{{ jenkins_admin_passwd }}"
-        body: json={{ lookup('template', 'vagrant-credential.j2')|to_nice_json}}
-        force_basic_auth: yes
-        headers:
-          Jenkins-Crumb: "{{ crumb.content | regex_replace('Jenkins-Crumb:') }}"
-        status_code: 302
-      with_sequence: count={{ jenkins_slaves|int }}
-
-#    - name: Create nodes
-
+  - name: Create credentials for vagrant slaves
+    uri:
+      url: 'http://localhost/credentials/store/system/domain/_/createCredentials'
+      method: POST
+      user: admin
+      password: "{{ jenkins_admin_passwd }}"
+      body: json={{ lookup('template', 'api/credential.j2')|to_nice_json}}
+      force_basic_auth: yes
+      headers:
+        Jenkins-Crumb: "{{ crumb.content | regex_replace('Jenkins-Crumb:') }}"
+      status_code: 302
+    with_sequence: count={{ jenkins_slaves|int }}
     when: vagrant is defined
+
+  - name: Create credential for non-vagrant  slaves
+    uri:
+      url: 'http://localhost/credentials/store/system/domain/_/createCredentials'
+      method: POST
+      user: admin
+      password: "{{ jenkins_admin_passwd }}"
+      body: json={{ lookup('template', 'api/credential.j2')|to_nice_json}}
+      force_basic_auth: yes
+      headers:
+        Jenkins-Crumb: "{{ crumb.content | regex_replace('Jenkins-Crumb:') }}"
+      status_code: 302
+    when: vagrant is not defined
+
+  - name: Create nodes
+    uri:
+      url: 'http://localhost/computer/doCreateItem?name={{ item }}&type=hudson.slaves.DumbSlave'
+      method: POST
+      user: admin
+      password: "{{ jenkins_admin_passwd }}"
+      body: json={{ lookup('template', 'api/slave.j2')|to_nice_json}}
+      force_basic_auth: yes
+      headers:
+        Jenkins-Crumb: "{{ crumb.content | regex_replace('Jenkins-Crumb:') }}"
+      status_code: 302
+    with_items: "{{ groups.jenkins_slaves }}"
   when: inventory_hostname in groups['jenkins_master']
