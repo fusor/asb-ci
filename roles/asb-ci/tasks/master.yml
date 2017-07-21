@@ -5,14 +5,32 @@
       name: "{{ item }}"
       state: latest
     with_items:
+    - certbot
     - jenkins
-    - nginx
     - libsemanage-python
+    - nginx
+    - openssl
     - py-bcrypt
 
+  - block:
+    - debug:
+        msg: #Set up certbot, configure nginx, do systemctl enable --now certbot-renew.timer
+    when:
+    - vagrant is not defined
+    - letsencrypt
+
+  - name: Create self-signed SSL cert
+    command: openssl req -new -nodes -x509 -subj "/C=US/ST=North Carolina/L=Raleigh/O=Jenkins/CN={{ inventory_hostname }}" -days 3650 -keyout /etc/ssl/certs/jenkins.key -out /etc/ssl/certs/jenkins.crt -extensions v3_ca
+    args:
+      creates: /etc/ssl/certs/jenkins.crt
+    when:
+    - custom_cert_file is not defined
+    - custom_key_file is not defined
+    - not letsencrypt
+
   - name: Configure nginx
-    copy:
-      src: "{{ role_path }}/files/etc/nginx/nginx.conf"
+    template:
+      src: "{{ role_path }}/templates/etc/nginx/nginx.conf.j2"
       dest: /etc/nginx/nginx.conf
 
   - name: Configure jenkins
@@ -102,16 +120,17 @@
 
   - name: Obtain crumb
     uri:
-      url: 'http://localhost/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'
+      url: 'https://localhost/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'
       user: admin
       password: "{{ jenkins_admin_passwd }}"
       force_basic_auth: yes
       return_content: yes
+      validate_certs: no
     register: crumb
 
   - name: Create credentials for vagrant slaves
     uri:
-      url: 'http://localhost/credentials/store/system/domain/_/createCredentials'
+      url: 'https://localhost/credentials/store/system/domain/_/createCredentials'
       method: POST
       user: admin
       password: "{{ jenkins_admin_passwd }}"
@@ -120,12 +139,13 @@
       headers:
         Jenkins-Crumb: "{{ crumb.content | regex_replace('Jenkins-Crumb:') }}"
       status_code: 302
+      validate_certs: no
     with_sequence: count={{ jenkins_slaves|int }}
     when: vagrant is defined
 
   - name: Create credential for non-vagrant  slaves
     uri:
-      url: 'http://localhost/credentials/store/system/domain/_/createCredentials'
+      url: 'https://localhost/credentials/store/system/domain/_/createCredentials'
       method: POST
       user: admin
       password: "{{ jenkins_admin_passwd }}"
@@ -134,11 +154,12 @@
       headers:
         Jenkins-Crumb: "{{ crumb.content | regex_replace('Jenkins-Crumb:') }}"
       status_code: 302
+      validate_certs: no
     when: vagrant is not defined
 
   - name: Create nodes
     uri:
-      url: 'http://localhost/computer/doCreateItem?name={{ item }}&type=hudson.slaves.DumbSlave'
+      url: 'https://localhost/computer/doCreateItem?name={{ item }}&type=hudson.slaves.DumbSlave'
       method: POST
       user: admin
       password: "{{ jenkins_admin_passwd }}"
@@ -146,6 +167,7 @@
       force_basic_auth: yes
       headers:
         Jenkins-Crumb: "{{ crumb.content | regex_replace('Jenkins-Crumb:') }}"
-      status_code: 302
+      status_code: 302,400
+      validate_certs: no
     with_items: "{{ groups.jenkins_slaves }}"
   when: inventory_hostname in groups['jenkins_master']

@@ -17,6 +17,11 @@ Baremetal
 Ansible Extra Vars
 -------------------
 * **jenkins_admin_passwd**: By default the admin password is 'changeme'.
+* **custom_cert_file**: Custom SSL cert file to use with nginx. Should already exist on your master.
+* **custom_key_file**: Custom SSL key file to use with nginx. Should already exist on your master.
+* **letsencrypt**: False if by default. If true and vagrant is undefined it will use certbot to set up letsencrypt certs.
+* **letsencrypt_hostname**: hostname to configure for lets encrypt.
+* **letsencrypt_email**: email address to use for letsencrypt.
 * **slave_executors**: 2 by default.
 * **slave_ssh_private_key_file**: By default this is /root/.ssh/id_rsa when not using vagrant. When using vagrant the libvirt private key is used for each host.
 * **slave_ssh_username**: The vagrant user will be used regardless of this setting if vagrant is defined, otherwise the default is root.
