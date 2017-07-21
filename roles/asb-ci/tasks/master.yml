@@ -80,12 +80,13 @@
       state: enabled
     with_items:
     - 80/tcp
+    - 443/tcp
     - 59730/tcp
 
-  - name: Reload firewalld
+  - name: Restart firewalld
     systemd:
       name: firewalld
-      state: reloaded
+      state: restarted
 
   - name: Allow nginx to network connect
     seboolean:
@@ -93,11 +94,21 @@
       state: yes
       persistent: yes
 
+  - name: Wait for jenkins and nginx start
+    uri:
+      url: https://{{ inventory_hostname }}/login
+      validate_certs: no
+    register: result
+    until: result.status == 200
+    retries: 5
+    delay: 3
+
   - name: Get jenkins client
     get_url:
-      url: "http://localhost/jnlpJars/jenkins-cli.jar"
+      url: "https://localhost/jnlpJars/jenkins-cli.jar"
       dest: /root/jenkins-cli.jar
       mode: 0644
+      validate_certs: no
 
   - name: Install plugins
     shell: java -jar /root/jenkins-cli.jar -s http://127.0.0.1:8080/ install-plugin {{ item }} --username admin --password {{ jenkins_admin_passwd }}
@@ -113,7 +124,7 @@
     - workflow-aggregator
     - ws-cleanup
 
-  - name: Restart Jenkins
+  - name: Reload Jenkins
     systemd:
       name: jenkins
       state: reloaded
