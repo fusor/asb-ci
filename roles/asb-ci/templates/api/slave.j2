@@ -15,6 +15,10 @@
 {% else %}
     'credentialsId': 'slave-ssh',
 {% endif %}
+    'sshHostKeyVerificationStrategy': {
+      'stapler-class': 'hudson.plugins.sshslaves.verifiers.NonVerifyingKeyVerificationStrategy',
+      '$class': 'hudson.plugins.sshslaves.verifiers.NonVerifyingKeyVerificationStrategy'
+    },
     'port': '22',
     'javaPath': '',
     'jvmOptions': '',

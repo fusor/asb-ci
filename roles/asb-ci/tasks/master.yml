@@ -124,10 +124,31 @@
     - workflow-aggregator
     - ws-cleanup
 
-  - name: Reload Jenkins
+  - name: Disable cli remoting
+    copy:
+      src: "{{ role_path }}/files/var/lib/jenkins/jenkins.CLI.xml"
+      dest: /var/lib/jenkins/jenkins.CLI.xml
+
+  - name: Enable master to slave security
+    copy:
+      content: false
+      dest: /var/lib/jenkins/secrets/slave-to-master-security-kill-switch
+      owner: jenkins
+      group: jenkins
+
+  - name: Restart jenkins to load plugins
     systemd:
       name: jenkins
-      state: reloaded
+      state: restarted
+
+  - name: Wait for jenkins start
+    uri:
+      url: https://{{ inventory_hostname }}/login
+      validate_certs: no
+    register: result
+    until: result.status == 200
+    retries: 5
+    delay: 3
 
   - name: Obtain crumb
     uri:
