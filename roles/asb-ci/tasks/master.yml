@@ -202,4 +202,5 @@
       status_code: 302,400
       validate_certs: no
     with_items: "{{ groups.jenkins_slaves }}"
+    when: "'jenkins_slaves' in groups"
   when: inventory_hostname in groups['jenkins_master']
