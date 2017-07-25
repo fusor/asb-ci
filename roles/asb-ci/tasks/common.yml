@@ -17,22 +17,37 @@
       name: '*'
       state: latest
 
+  - name: Setup origin repo
+    yum:
+     name: centos-release-openshift-origin
+     state: present
+
   - name: Install packages
     yum:
       name: "{{ item }}"
-      state: latest
+      state: present
     with_items:
     - java-1.8.0-openjdk
     - git
     - 'http://dl.fedoraproject.org/pub/epel/testing/7/x86_64/c/copr-cli-1.60-1.el7.noarch.rpm'
     - ansible
     - docker
+    - origin-clients
 
   - name: Configure docker storage
     copy:
-      content: |
-               STORAGE_DRIVER=""
+      content: STORAGE_DRIVER=""
       dest: /etc/sysconfig/docker-storage-setup
+
+  - name: Configure docker
+    copy:
+      content: |
+               OPTIONS='--selinux-enabled --log-driver=journald --signature-verification=false'
+               if [ -z "${DOCKER_CERT_PATH}" ]; then
+                   DOCKER_CERT_PATH=/etc/docker
+               fi
+               INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'
+      dest: /etc/sysconfig/docker
 
   - name: Start docker
     systemd:

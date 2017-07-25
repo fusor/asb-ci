@@ -12,6 +12,12 @@
     - openssl
     - py-bcrypt
 
+  # So we can run docker. Giving docker access basically gives root
+  # So as ugly as this is I'm not sure what's better
+  - user:
+      name: jenkins
+      groups: root
+
   - block:
     - debug:
         msg: #Set up certbot, configure nginx, do systemctl enable --now certbot-renew.timer
