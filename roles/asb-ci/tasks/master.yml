@@ -12,6 +12,8 @@
     - openssl
     - py-bcrypt
 
+  - block:
+    - debug:
         msg: #Set up certbot, configure nginx, do systemctl enable --now certbot-renew.timer
     when:
     - vagrant is not defined
