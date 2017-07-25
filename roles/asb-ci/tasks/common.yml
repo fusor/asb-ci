@@ -24,6 +24,7 @@
     with_items:
     - java-1.8.0-openjdk
     - git
+    - 'http://dl.fedoraproject.org/pub/epel/testing/7/x86_64/c/copr-cli-1.60-1.el7.noarch.rpm'
 
   - name: Start firewalld
     systemd:

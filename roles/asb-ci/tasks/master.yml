@@ -49,13 +49,16 @@
     shell: python -c 'import bcrypt; print(bcrypt.hashpw("{{ jenkins_admin_passwd }}", bcrypt.gensalt(log_rounds=10)))'
     register: jenkins_admin_passwd_hash
 
-  - name: Create users directory
+  - name: Create directories
     file:
-      path: /var/lib/jenkins/users/admin
+      path: "{{ item }}"
       mode: 0755
       state: directory
       owner: jenkins
       group: jenkins
+    with_items:
+    - /var/lib/jenkins/users/admin
+    - /var/lib/jenkins/jobs/Copr-RPM-based-container-rebuild-template/
 
   - name: Configure jenkins admin user
     template:
@@ -63,6 +66,11 @@
       dest: /var/lib/jenkins/users/admin/config.xml
       owner: jenkins
       group: jenkins
+
+  - name: Configure job template
+    copy:
+      src: "{{ role_path }}/files/var/lib/jenkins/jobs/Copr-RPM-based-container-rebuild-template/config.xml"
+      dest: "/var/lib/jenkins/jobs/Copr-RPM-based-container-rebuild-template/config.xml"
 
   - name: Start master services
     systemd:
@@ -175,7 +183,7 @@
     with_sequence: count={{ jenkins_slaves|int }}
     when: vagrant is defined
 
-  - name: Create credential for non-vagrant  slaves
+  - name: Create credentials for non-vagrant slaves
     uri:
       url: 'https://localhost/credentials/store/system/domain/_/createCredentials'
       method: POST
