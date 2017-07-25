@@ -25,6 +25,20 @@
     - java-1.8.0-openjdk
     - git
     - 'http://dl.fedoraproject.org/pub/epel/testing/7/x86_64/c/copr-cli-1.60-1.el7.noarch.rpm'
+    - ansible
+    - docker
+
+  - name: Configure docker storage
+    copy:
+      content: |
+               STORAGE_DRIVER=""
+      dest: /etc/sysconfig/docker-storage-setup
+
+  - name: Start docker
+    systemd:
+      name: docker
+      enabled: yes
+      state: started
 
   - name: Start firewalld
     systemd:
