@@ -12,6 +12,30 @@
       gpgcheck: yes
       gpgkey: http://pkg.jenkins-ci.org/redhat-stable/jenkins-ci.org.key
 
+  - name: Open http firewall access
+    firewalld:
+      port: "{{ item }}"
+      permanent: true
+      state: enabled
+    with_items:
+    - 53/tcp
+    - 53/udp
+    - 80/tcp
+    - 443/tcp
+    - 2379/tcp
+    - 2380/tcp
+    - 4789/udp
+    - 8053/tcp
+    - 8053/udp
+    - 8443/tcp
+    - 8444/tcp
+    - 10250/tcp
+
+  - name: Restart firewalld
+    systemd:
+      name: firewalld
+      state: restarted
+
   - name: Update packages
     yum:
       name: '*'
@@ -33,6 +57,7 @@
     - ansible
     - docker
     - origin-clients
+    - net-tools
 
   - name: Configure docker storage
     copy:
