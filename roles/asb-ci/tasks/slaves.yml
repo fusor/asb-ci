@@ -1,0 +1,50 @@
+  - name: Configure slave firewalls for oc cluster up
+    firewalld:
+      port: "{{ item }}"
+      permanent: true
+      state: enabled
+    with_items:
+    - 53/tcp
+    - 53/udp
+    - 80/tcp
+    - 443/tcp
+    - 2379/tcp
+    - 2380/tcp
+    - 4789/udp
+    - 8053/tcp
+    - 8053/udp
+    - 8443/tcp
+    - 8444/tcp
+    - 10250/tcp
+    when: inventory_hostname in groups['jenkins_slaves']
+
+  - name: Reload slave firewalls
+    systemd:
+      name: firewalld
+      state: reloaded
+
+  - name: Install docker on slaves
+    yum:
+      name: docker
+      state: present
+
+  - name: Configure docker storage on slaves
+    copy:
+      content: STORAGE_DRIVER=""
+      dest: /etc/sysconfig/docker-storage-setup
+
+  - name: Configure docker on slaves
+    copy:
+      content: |
+               OPTIONS='--selinux-enabled --log-driver=journald --signature-verification=false'
+               if [ -z "${DOCKER_CERT_PATH}" ]; then
+                   DOCKER_CERT_PATH=/etc/docker
+               fi
+               INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'
+      dest: /etc/sysconfig/docker
+
+  - name: Start docker on slaves
+    systemd:
+      name: docker
+      enabled: yes
+      state: started

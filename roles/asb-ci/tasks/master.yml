@@ -1,5 +1,13 @@
 ---
-- block:
+  - name: Create jenkins repo
+    yum_repository:
+      name: "jenkins"
+      description: "Jenkins Stable Repo"
+      baseurl: "http://pkg.jenkins.io/redhat-stable"
+      enabled: yes
+      gpgcheck: yes
+      gpgkey: http://pkg.jenkins-ci.org/redhat-stable/jenkins-ci.org.key
+
   - name: Install master packages
     yum:
       name: "{{ item }}"
@@ -59,6 +67,7 @@
     with_items:
     - /var/lib/jenkins/users/admin
     - /var/lib/jenkins/jobs/Copr-RPM-based-container-rebuild-template/
+    - /var/lib/jenkins/jobs/Run-catasb/
 
   - name: Configure jenkins admin user
     template:
@@ -71,6 +80,11 @@
     copy:
       src: "{{ role_path }}/files/var/lib/jenkins/jobs/Copr-RPM-based-container-rebuild-template/config.xml"
       dest: "/var/lib/jenkins/jobs/Copr-RPM-based-container-rebuild-template/config.xml"
+
+  - name: Configure catasb job
+    copy:
+      src: "{{ role_path }}/files/var/lib/jenkins/jobs/Run-catasb/config.xml"
+      dest: "/var/lib/jenkins/jobs/Run-catasb/config.xml"
 
   - name: Start master services
     systemd:
@@ -87,6 +101,8 @@
       permanent: true
       state: enabled
     with_items:
+    - 80/tcp
+    - 443/tcp
     - 59730/tcp
 
   - name: Restart firewalld
@@ -209,4 +225,3 @@
       validate_certs: no
     with_items: "{{ groups.jenkins_slaves }}"
     when: "'jenkins_slaves' in groups"
-  when: inventory_hostname in groups['jenkins_master']

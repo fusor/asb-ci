@@ -3,85 +3,18 @@
     hostname:
       name: "{{ inventory_hostname }}"
 
-  - name: Create jenkins repo
-    yum_repository:
-      name: "jenkins"
-      description: "Jenkins Stable Repo"
-      baseurl: "http://pkg.jenkins.io/redhat-stable"
-      enabled: yes
-      gpgcheck: yes
-      gpgkey: http://pkg.jenkins-ci.org/redhat-stable/jenkins-ci.org.key
-
-  - name: Open http firewall access
-    firewalld:
-      port: "{{ item }}"
-      permanent: true
-      state: enabled
-    with_items:
-    - 53/tcp
-    - 53/udp
-    - 80/tcp
-    - 443/tcp
-    - 2379/tcp
-    - 2380/tcp
-    - 4789/udp
-    - 8053/tcp
-    - 8053/udp
-    - 8443/tcp
-    - 8444/tcp
-    - 10250/tcp
-
-  - name: Restart firewalld
-    systemd:
-      name: firewalld
-      state: restarted
-
   - name: Update packages
     yum:
       name: '*'
       state: latest
 
-  - name: Setup origin repo
-    yum:
-     name: centos-release-openshift-origin
-     state: present
-
-  - name: Install packages
+  - name: Install common packages
     yum:
       name: "{{ item }}"
       state: present
     with_items:
-    - java-1.8.0-openjdk
-    - git
-    - 'http://dl.fedoraproject.org/pub/epel/testing/7/x86_64/c/copr-cli-1.60-1.el7.noarch.rpm'
     - ansible
-    - docker
-    - origin-clients
+    - 'http://dl.fedoraproject.org/pub/epel/testing/7/x86_64/c/copr-cli-1.60-1.el7.noarch.rpm'
+    - git
+    - java-1.8.0-openjdk
     - net-tools
-
-  - name: Configure docker storage
-    copy:
-      content: STORAGE_DRIVER=""
-      dest: /etc/sysconfig/docker-storage-setup
-
-  - name: Configure docker
-    copy:
-      content: |
-               OPTIONS='--selinux-enabled --log-driver=journald --signature-verification=false'
-               if [ -z "${DOCKER_CERT_PATH}" ]; then
-                   DOCKER_CERT_PATH=/etc/docker
-               fi
-               INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'
-      dest: /etc/sysconfig/docker
-
-  - name: Start docker
-    systemd:
-      name: docker
-      enabled: yes
-      state: started
-
-  - name: Start firewalld
-    systemd:
-      name: firewalld
-      enabled: yes
-      state: started

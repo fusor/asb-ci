@@ -1,3 +1,8 @@
 ---
 - include: common.yml
+
 - include: master.yml
+  when: inventory_hostname in groups['jenkins_master']
+
+- include: slaves.yml
+  when: inventory_hostname in groups['jenkins_slaves']
