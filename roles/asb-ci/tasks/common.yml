@@ -3,7 +3,7 @@
     hostname:
       name: "{{ inventory_hostname }}"
 
- - name: Configure epel repo
+  - name: Configure epel repo
     yum:
       name: epel-release
       state: present
