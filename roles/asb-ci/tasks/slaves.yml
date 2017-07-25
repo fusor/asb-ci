@@ -44,7 +44,7 @@
       enabled: yes
       state: started
 
-  - name: Reload slave firewalls
+  - name: Restart slave firewalls
     systemd:
       name: firewalld
-      state: reloaded
+      state: restarted
