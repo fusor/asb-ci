@@ -29,10 +29,11 @@
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>export PATH=/root/bin:$PATH
-cd local/linux/
+      <command>PATH=/root/bin:$PATH
+cd local/linux
 ./reset_environment.sh</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers/>
   <buildWrappers/>
+</project>
