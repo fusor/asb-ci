@@ -18,11 +18,6 @@
     - 10250/tcp
     when: inventory_hostname in groups['jenkins_slaves']
 
-  - name: Reload slave firewalls
-    systemd:
-      name: firewalld
-      state: reloaded
-
   - name: Install docker on slaves
     yum:
       name: docker
@@ -48,3 +43,8 @@
       name: docker
       enabled: yes
       state: started
+
+  - name: Reload slave firewalls
+    systemd:
+      name: firewalld
+      state: reloaded
