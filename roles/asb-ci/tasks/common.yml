@@ -3,16 +3,16 @@
     hostname:
       name: "{{ inventory_hostname }}"
 
+ - name: Configure epel repo
+    yum:
+      name: epel-release
+      state: present
+
   - name: Update packages
     yum:
       name: '*'
       state: latest
 
-  - name: Configure epel repo
-    yum:
-      name: epel-release
-      state: present
- 
   - name: Install common packages
     yum:
       name: "{{ item }}"
