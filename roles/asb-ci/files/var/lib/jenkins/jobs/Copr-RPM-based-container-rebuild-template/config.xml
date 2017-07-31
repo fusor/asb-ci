@@ -17,9 +17,8 @@
           <defaultValue></defaultValue>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
-          <name>URL</name>
-          <description>Docker Hub trigger URL. This has the format:
-https://registry.hub.docker.com/u/ansibleplaybookbundle/ansible-service-broker/trigger/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/</description>
+          <name>DOCKER_URL</name>
+          <description>Docker Cloud/Hub trigger URL.</description>
           <defaultValue></defaultValue>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
@@ -27,10 +26,15 @@ https://registry.hub.docker.com/u/ansibleplaybookbundle/ansible-service-broker/t
           <description>Docker tag to rebuild</description>
           <defaultValue>latest</defaultValue>
         </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>COPR_URL</name>
+          <description>Copr Webhook URL</description>
+          <defaultValue></defaultValue>
+        </hudson.model.StringParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
-  <scm class="hudson.plugins.git.GitSCM" plugin="git@3.4.1">
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@3.5.0">
     <configVersion>2</configVersion>
     <userRemoteConfigs>
       <hudson.plugins.git.UserRemoteConfig/>
@@ -45,18 +49,25 @@ https://registry.hub.docker.com/u/ansibleplaybookbundle/ansible-service-broker/t
     <extensions/>
   </scm>
   <canRoam>true</canRoam>
-  <disabled>false</disabled>
+  <disabled>true</disabled>
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
   <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
   <triggers>
-    <com.cloudbees.jenkins.GitHubPushTrigger plugin="github@1.27.0">
+    <hudson.triggers.SCMTrigger>
       <spec></spec>
-    </com.cloudbees.jenkins.GitHubPushTrigger>
+      <ignorePostCommitHooks>false</ignorePostCommitHooks>
+    </hudson.triggers.SCMTrigger>
   </triggers>
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>export DATE=$(expr `date +%s` - 60)
+      <command>export DATE=$(date +%s)
+
+curl -X POST -H &quot;content-type: application/json&quot; $COPR_URL -d &quot;{
+  \&quot;repository\&quot;: {
+    \&quot;clone_url\&quot;: \&quot;$GIT_URL.git\&quot;
+  }
+}&quot;
 
 while [[ &quot;$(copr-cli get-package $PROJECT --name $PACKAGE --with-latest-succeeded-build 2&gt; /dev/null | python -c &apos;import sys, json; print json.load(sys.stdin)[&quot;latest_succeeded_build&quot;][&quot;submitted_on&quot;]&apos;)&quot; &lt; &quot;$DATE&quot; ]];
 do
@@ -64,7 +75,7 @@ do
   sleep 60
 done
 
-curl -H &quot;Content-Type: application/json&quot; --data &quot;{\&quot;docker_tag\&quot;: \&quot;$TAG\&quot;}&quot; -X POST $URL</command>
+curl -H &quot;Content-Type: application/json&quot; --data &quot;{\&quot;docker_tag\&quot;: \&quot;$TAG\&quot;}&quot; -X POST $DOCKER_URL</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers/>
