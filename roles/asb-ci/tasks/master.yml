@@ -67,7 +67,7 @@
     with_items:
     - /var/lib/jenkins/users/admin
     - /var/lib/jenkins/jobs/Copr-RPM-based-container-rebuild-template/
-    - /var/lib/jenkins/jobs/Run-catasb/
+    - "/var/lib/jenkins/jobs/run-catasb/"
 
   - name: Configure jenkins admin user
     template:
@@ -83,8 +83,8 @@
 
   - name: Configure catasb job
     copy:
-      src: "{{ role_path }}/files/var/lib/jenkins/jobs/Run-catasb/config.xml"
-      dest: "/var/lib/jenkins/jobs/Run-catasb/config.xml"
+      src: "{{ role_path }}/files/var/lib/jenkins/jobs/run-catasb/config.xml"
+      dest: "/var/lib/jenkins/jobs/run-catasb/config.xml"
 
   - name: Start master services
     systemd:

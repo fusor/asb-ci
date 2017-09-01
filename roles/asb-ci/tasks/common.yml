@@ -5,7 +5,7 @@
 
   - name: Configure epel repo
     yum:
-      name: epel-release
+      name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
       state: present
 
   - name: Update packages
@@ -13,13 +13,18 @@
       name: '*'
       state: latest
 
+  - name: Enable repos for RHEL in AWS:
+    shell: yum-config-manager --enable rhui-REGION-rhel-server-extras rhui-REGION-rhel-server-optional
+    when: ansible_distribution == 'RedHat'
+
   - name: Install common packages
     yum:
       name: "{{ item }}"
       state: present
     with_items:
     - ansible
-    - 'http://dl.fedoraproject.org/pub/epel/testing/7/x86_64/c/copr-cli-1.60-1.el7.noarch.rpm'
+    - copr-cli
+    - firewalld
     - git
     - java-1.8.0-openjdk
     - net-tools

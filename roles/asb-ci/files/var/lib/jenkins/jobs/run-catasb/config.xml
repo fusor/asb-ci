@@ -1,0 +1,124 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.chikli.hudson.plugin.naginator.NaginatorOptOutProperty plugin="naginator@1.17.2">
+      <optOut>false</optOut>
+    </com.chikli.hudson.plugin.naginator.NaginatorOptOutProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>ORGANIZATION</name>
+          <description></description>
+          <defaultValue>ansibleplaybookbundle</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>TAG</name>
+          <description></description>
+          <defaultValue>latest</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@3.5.1">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>https://github.com/fusor/catasb</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <assignedNode>docker</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>H * * * *</spec>
+    </hudson.triggers.TimerTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>export ERROR=false
+
+PATH=/root/bin:$PATH
+
+cat &lt;&lt; EOF &gt; config/my_vars.yml
+---
+dockerhub_user_name: brokerciuser
+dockerhub_org_name: $ORGANIZATION
+dockerhub_user_password: brokerciuser
+broker_dev_broker: true
+broker_image_name: docker.io/$ORGANIZATION/origin-ansible-service-broker
+broker_tag: $TAG
+apbtag: $TAG
+EOF
+
+cd local/linux
+./reset_environment.sh
+
+git clone https://github.com/openshift/ansible-service-broker
+cd ansible-service-broker
+
+ORG_LEN=$(echo -ne $ORGANIZATION | wc -c)
+TAG_LEN=$(echo -ne $TAG | wc -c)
+ORG_TAG_LEN=$(expr $ORG_LEN + $TAG_LEN)
+
+if [[ $ORG_TAG_LEN &gt; 26 ]]; then
+  EXCESS=$(expr $ORG_TAG_LEN - 26)
+  PGSQL_TAG=$(echo -ne $TAG | cut -b 1-$(expr $TAG_LEN - $EXCESS))
+else
+  PGSQL_TAG=$TAG
+fi
+
+if [[ $ORG_TAG_LEN &gt; 30 ]]; then
+  EXCESS=$(expr $ORG_TAG_LEN - 30)
+  MW_TAG=$(echo -ne $TAG | cut -b 1-$(expr $TAG_LEN - $EXCESS))
+else
+  MW_TAG=$TAG
+fi
+
+sed -i &quot;s/ansibleplaybookbundle/$ORGANIZATION/&quot; ./scripts/broker-ci/postgresql.yaml
+sed -i &quot;s/ansibleplaybookbundle/$ORGANIZATION/&quot; ./scripts/broker-ci/mediawiki123.yaml
+sed -i &quot;s/lates/$PGSQL_TAG/&quot; ./scripts/broker-ci/postgresql.yaml
+sed -i &quot;s/latest/$MW_TAG/&quot; ./scripts/broker-ci/mediawiki123.yaml
+
+
+./scripts/broker-ci/local-ci.sh
+</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.Mailer plugin="mailer@1.20">
+      <recipients>ccpeng-team@redhat.com</recipients>
+      <dontNotifyEveryUnstableBuild>false</dontNotifyEveryUnstableBuild>
+      <sendToIndividuals>false</sendToIndividuals>
+    </hudson.tasks.Mailer>
+    <hudson.plugins.ws__cleanup.WsCleanup plugin="ws-cleanup@0.34">
+      <patterns class="empty-list"/>
+      <deleteDirs>false</deleteDirs>
+      <skipWhenFailed>false</skipWhenFailed>
+      <cleanWhenSuccess>true</cleanWhenSuccess>
+      <cleanWhenUnstable>true</cleanWhenUnstable>
+      <cleanWhenFailure>true</cleanWhenFailure>
+      <cleanWhenNotBuilt>true</cleanWhenNotBuilt>
+      <cleanWhenAborted>true</cleanWhenAborted>
+      <notFailBuild>false</notFailBuild>
+      <cleanupMatrixParent>false</cleanupMatrixParent>
+      <externalDelete></externalDelete>
+    </hudson.plugins.ws__cleanup.WsCleanup>
+  </publishers>
+  <buildWrappers/>
+</project>
