@@ -28,6 +28,14 @@
       content: STORAGE_DRIVER=""
       dest: /etc/sysconfig/docker-storage-setup
 
+  - set_fact:
+      homedir: "/root"
+    when: slave_ssh_username == "root"
+
+  - set_fact:
+      homedir: "/home/{{ slave_ssh_username }}"
+    when: slave_ssh_username != "root"
+
   - name: Configure docker on slaves
     copy:
       content: |

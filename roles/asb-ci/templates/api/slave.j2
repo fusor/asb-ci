@@ -2,7 +2,7 @@
   'name': '{{ item }}',
   'nodeDescription': '{{ item }}',
   'numExecutors': '2',
-  'remoteFS': '/home/vagrant',
+  'remoteFS': '{{ homedir }}',
   'labelString': 'docker',
   'mode': 'NORMAL',
   '': ['hudson.plugins.sshslaves.SSHLauncher', 'hudson.slaves.RetentionStrategy$Always'],
