@@ -211,6 +211,14 @@
       validate_certs: no
     when: vagrant is not defined
 
+  - set_fact:
+      homedir: "/root"
+    when: slave_ssh_username == "root"
+
+  - set_fact:
+      homedir: "/home/{{ slave_ssh_username }}"
+    when: slave_ssh_username != "root"
+
   - name: Create nodes
     uri:
       url: 'https://localhost/computer/doCreateItem?name={{ item }}&type=hudson.slaves.DumbSlave'
