@@ -29,7 +29,10 @@
     'retryWaitTime': ''
   },
   'nodeProperties': {
-    'stapler-class-bag': 'true'
+    'stapler-class-bag': 'true',
+    'hudson-slaves-EnvironmentVariablesNodeProperty': {
+      'env': [{'key': 'PATH', 'value': '/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/{{ slave_ssh_username }}/.local/bin:/home/{{ slave_ssh_username }}/bin'}]
+    }
   },
   'type': 'hudson.slaves.DumbSlave',
   'crumb': '{{ crumb.content }}'

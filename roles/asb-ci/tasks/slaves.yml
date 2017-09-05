@@ -1,3 +1,17 @@
+  - set_fact:
+      slave_ssh_username: vagrant
+    when: vagrant is defined
+
+  - group:
+      name: docker
+      state: present
+
+  - user:
+      name: "{{ slave_ssh_username }}"
+      groups:
+      - "{{ slave_ssh_username }}"
+      - docker
+
   - name: Configure slave firewalls for oc cluster up
     firewalld:
       port: "{{ item }}"

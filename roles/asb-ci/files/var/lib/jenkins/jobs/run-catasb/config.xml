@@ -102,7 +102,7 @@ sed -i &quot;s/latest/$MW_TAG/&quot; ./scripts/broker-ci/mediawiki123.yaml
   </builders>
   <publishers>
     <hudson.tasks.Mailer plugin="mailer@1.20">
-      <recipients>ccpeng-team@redhat.com</recipients>
+      <recipients></recipients>
       <dontNotifyEveryUnstableBuild>false</dontNotifyEveryUnstableBuild>
       <sendToIndividuals>false</sendToIndividuals>
     </hudson.tasks.Mailer>

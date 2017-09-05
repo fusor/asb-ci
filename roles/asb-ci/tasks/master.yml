@@ -212,6 +212,10 @@
     when: vagrant is not defined
 
   - set_fact:
+      slave_ssh_username: vagrant
+    when: vagrant is defined
+
+  - set_fact:
       homedir: "/root"
     when: slave_ssh_username == "root"
 
