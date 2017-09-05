@@ -62,3 +62,8 @@
     systemd:
       name: firewalld
       state: restarted
+
+  - name: Restart docker
+    systemd:
+      name: docker
+      state: restarted
