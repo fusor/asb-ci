@@ -1,3 +1,12 @@
+  - name: Workaround NetworkManager insisting on adding nip.io to search
+    copy:
+      content: |
+               #!/bin/bash
+               sed -i 's/search.*.nip\.io/search/g' /etc/resolv.conf
+      dest: /etc/NetworkManager/dispatcher.d/98-nip.io.sh
+      mode: 0755
+    when: "'nip.io' in inventory_hostname"
+
   - set_fact:
       slave_ssh_username: vagrant
     when: vagrant is defined
